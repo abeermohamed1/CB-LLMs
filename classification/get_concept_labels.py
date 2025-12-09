@@ -14,7 +14,7 @@ import time
 parser = argparse.ArgumentParser()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-parser.add_argument("--dataset", type=str, default="SetFit/sst2")
+parser.add_argument("--dataset", type=str, default="rakkaalhazimi/hotel-review")
 parser.add_argument("--concept_text_sim_model", type=str, default="mpnet", help="mpnet, simcse or angle")
 
 parser.add_argument("--max_length", type=int, default=512)
@@ -47,8 +47,7 @@ def build_sim_loaders(encode_sim):
 
 print("loading data...")
 train_dataset = load_dataset(args.dataset, split='train')
-if args.dataset == 'SetFit/sst2':
-    val_dataset = load_dataset(args.dataset, split='validation')
+
 print("training data len: ", len(train_dataset))
 if args.dataset == 'SetFit/sst2':
     print("val data len: ", len(val_dataset))
@@ -118,3 +117,4 @@ np.save(prefix + "concept_labels_train.npy", train_similarity)
 if args.dataset == 'SetFit/sst2':
 
     np.save(prefix + "concept_labels_val.npy", val_similarity)
+
