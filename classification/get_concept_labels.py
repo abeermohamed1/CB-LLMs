@@ -53,7 +53,7 @@ if args.dataset == 'SetFit/sst2':
     print("val data len: ", len(val_dataset))
 
 
-concept_set = CFG.concept_set[args.dataset]
+concept_set = CFG.concept_set[hotelreview]
 print("concept len: ", len(concept_set))
 
 if args.concept_text_sim_model == 'mpnet':
@@ -117,4 +117,5 @@ np.save(prefix + "concept_labels_train.npy", train_similarity)
 if args.dataset == 'SetFit/sst2':
 
     np.save(prefix + "concept_labels_val.npy", val_similarity)
+
 
