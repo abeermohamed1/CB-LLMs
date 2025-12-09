@@ -53,12 +53,10 @@ if __name__ == "__main__":
     
     print("loading data...")
     train_dataset = load_dataset(dataset, split='train')
-    if dataset == 'SetFit/sst2':
-        val_dataset = load_dataset(dataset, split='validation')
+   
     test_dataset = load_dataset(dataset, split='test')
     print("training data len: ", len(train_dataset))
-    if dataset == 'SetFit/sst2':
-        print("val data len: ", len(val_dataset))
+  
     print("test data len: ", len(test_dataset))
     print("tokenizing...")
 
@@ -73,33 +71,16 @@ if __name__ == "__main__":
 
     encoded_train_dataset = train_dataset.map(lambda e: tokenizer(e[CFG.example_name[dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True, batch_size=len(train_dataset))
     encoded_train_dataset = encoded_train_dataset.remove_columns([CFG.example_name[dataset]])
-    if dataset == 'SetFit/sst2':
-        encoded_train_dataset = encoded_train_dataset.remove_columns(['label_text'])
-    if dataset == 'dbpedia_14':
-        encoded_train_dataset = encoded_train_dataset.remove_columns(['title'])
+ 
     encoded_train_dataset = encoded_train_dataset[:len(encoded_train_dataset)]
-
-    if dataset == 'SetFit/sst2':
-        encoded_val_dataset = val_dataset.map(lambda e: tokenizer(e[CFG.example_name[dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True, batch_size=len(val_dataset))
-        encoded_val_dataset = encoded_val_dataset.remove_columns([CFG.example_name[dataset]])
-        if dataset == 'SetFit/sst2':
-            encoded_val_dataset = encoded_val_dataset.remove_columns(['label_text'])
-        if dataset == 'dbpedia_14':
-            encoded_val_dataset = encoded_val_dataset.remove_columns(['title'])
-        encoded_val_dataset = encoded_val_dataset[:len(encoded_val_dataset)]
 
     encoded_test_dataset = test_dataset.map(lambda e: tokenizer(e[CFG.example_name[dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True, batch_size=len(test_dataset))
     encoded_test_dataset = encoded_test_dataset.remove_columns([CFG.example_name[dataset]])
-    if dataset == 'SetFit/sst2':
-        encoded_test_dataset = encoded_test_dataset.remove_columns(['label_text'])
-    if dataset == 'dbpedia_14':
-        encoded_test_dataset = encoded_test_dataset.remove_columns(['title'])
+   
     encoded_test_dataset = encoded_test_dataset[:len(encoded_test_dataset)]
 
     print("creating loader...")
     train_loader = build_loaders(encoded_train_dataset, mode="valid")
-    if dataset == 'SetFit/sst2':
-        val_loader = build_loaders(encoded_val_dataset, mode="valid")
     test_loader = build_loaders(encoded_test_dataset, mode="test")
 
     concept_set = CFG.concept_set[dataset]
@@ -136,8 +117,7 @@ if __name__ == "__main__":
 
     print("get concept features...")
     FL_train_features = []
-    if dataset == 'SetFit/sst2':
-        FL_val_features = []
+   
     FL_test_features = []
     for batch in train_loader:
         batch = {k: v.to(device) for k, v in batch.items()}
@@ -154,23 +134,6 @@ if __name__ == "__main__":
             else:
                 train_features = backbone_cbl(batch)
             FL_train_features.append(train_features)
-
-    if dataset == 'SetFit/sst2':
-        for batch in val_loader:
-            batch = {k: v.to(device) for k, v in batch.items()}
-            with torch.no_grad():
-                if 'no_backbone' in cbl_name:
-                    val_features = preLM(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"]).last_hidden_state
-                    if args.backbone == 'roberta':
-                        val_features = val_features[:, 0, :]
-                    elif args.backbone == 'gpt2':
-                        val_features = eos_pooling(val_features, batch["attention_mask"])
-                    else:
-                        raise Exception("backbone should be roberta or gpt2")
-                    val_features = cbl(val_features)
-                else:
-                    val_features = backbone_cbl(batch)
-                FL_val_features.append(val_features)
 
     for batch in test_loader:
         batch = {k: v.to(device) for k, v in batch.items()}
@@ -189,8 +152,7 @@ if __name__ == "__main__":
             FL_test_features.append(test_features)
 
     train_c = torch.cat(FL_train_features, dim=0).detach().cpu()
-    if dataset == 'SetFit/sst2':
-        val_c = torch.cat(FL_val_features, dim=0).detach().cpu()
+  
     test_c = torch.cat(FL_test_features, dim=0).detach().cpu()
 
     train_c, train_mean, train_std = normalize(train_c, d=0)
@@ -201,10 +163,6 @@ if __name__ == "__main__":
     torch.save(train_mean, prefix + 'train_mean' + model_name)
     torch.save(train_std, prefix + 'train_std' + model_name)
 
-    if dataset == 'SetFit/sst2':
-        val_c, _, _ = normalize(val_c, d=0, mean=train_mean, std=train_std)
-        val_c = F.relu(val_c)
-
     test_c, _, _ = normalize(test_c, d=0, mean=train_mean, std=train_std)
     test_c = F.relu(test_c)
 
@@ -212,16 +170,11 @@ if __name__ == "__main__":
     train_y = torch.LongTensor(encoded_train_dataset["label"])
     indexed_train_ds = IndexedTensorDataset(train_c, train_y)
 
-    if dataset == 'SetFit/sst2':
-        val_y = torch.LongTensor(encoded_val_dataset["label"])
-        val_ds = TensorDataset(val_c, val_y)
-
     test_y = torch.LongTensor(encoded_test_dataset["label"])
     test_ds = TensorDataset(test_c, test_y)
 
     indexed_train_loader = DataLoader(indexed_train_ds, batch_size=args.saga_batch_size, shuffle=True)
-    if dataset == 'SetFit/sst2':
-        val_loader = DataLoader(val_ds, batch_size=args.saga_batch_size, shuffle=False)
+  
     test_loader = DataLoader(test_ds, batch_size=args.saga_batch_size, shuffle=False)
 
     print("dim of concept features: ", train_c.shape[1])
@@ -235,12 +188,8 @@ if __name__ == "__main__":
     metadata['max_reg']['nongrouped'] = 0.0007
 
     print("training final layer...")
-    if dataset == 'SetFit/sst2':
-        output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.saga_epoch, ALPHA, k=10,
-                               val_loader=val_loader, test_loader=test_loader, do_zero=True,
-                               n_classes=CFG.class_num[dataset])
-    else:
-        output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.saga_epoch, ALPHA, k=10,
+
+    output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.saga_epoch, ALPHA, k=10,
                                test_loader=test_loader, do_zero=True,
                                n_classes=CFG.class_num[dataset])
 
@@ -248,12 +197,8 @@ if __name__ == "__main__":
     W_g = output_proj['path'][-1]['weight']
     b_g = output_proj['path'][-1]['bias']
 
-    if dataset == 'SetFit/sst2':
-        output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.saga_epoch, ALPHA, epsilon=1, k=1,
-                               val_loader=val_loader, test_loader=test_loader, do_zero=False,
-                               n_classes=CFG.class_num[dataset], metadata=metadata, n_ex=train_c.shape[0])
-    else:
-        output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.saga_epoch, ALPHA, epsilon=1, k=1,
+ 
+    output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.saga_epoch, ALPHA, epsilon=1, k=1,
                                test_loader=test_loader, do_zero=False,
                                n_classes=CFG.class_num[dataset], metadata=metadata, n_ex=train_c.shape[0])
     print("save the sparse weights with test acc:", output_proj['path'][0]['metrics']['acc_test'])
@@ -264,4 +209,5 @@ if __name__ == "__main__":
     torch.save(b_g, prefix + 'b_g' + model_name)
     torch.save(W_g_sparse, prefix + 'W_g_sparse' + model_name)
     torch.save(b_g_sparse, prefix + 'b_g_sparse' + model_name)
+
 
