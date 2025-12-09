@@ -72,16 +72,9 @@ if __name__ == "__main__":
             d_list.append(
                 train_dataset.filter(lambda e: e['label'] == i).select(range(1000 // CFG.class_num[args.dataset])))
         train_dataset = concatenate_datasets(d_list)
-        if args.dataset == 'SetFit/sst2':
-            d_list = []
-            for i in range(CFG.class_num[args.dataset]):
-                d_list.append(
-                    val_dataset.filter(lambda e: e['label'] == i).select(range(80 // CFG.class_num[args.dataset])))
-            val_dataset = concatenate_datasets(d_list)
-
+       
         print("training labeled data len: ", len(train_dataset))
-        if args.dataset == 'SetFit/sst2':
-            print("val labeled data len: ", len(val_dataset))
+       
 
     if args.backbone == 'roberta':
         tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
@@ -95,23 +88,8 @@ if __name__ == "__main__":
         lambda e: tokenizer(e[CFG.example_name[args.dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True,
         batch_size=len(train_dataset))
     encoded_train_dataset = encoded_train_dataset.remove_columns([CFG.example_name[args.dataset]])
-    if args.dataset == 'SetFit/sst2':
-        encoded_train_dataset = encoded_train_dataset.remove_columns(['label_text'])
-    if args.dataset == 'dbpedia_14':
-        encoded_train_dataset = encoded_train_dataset.remove_columns(['title'])
+  
     encoded_train_dataset = encoded_train_dataset[:len(encoded_train_dataset)]
-
-    if args.dataset == 'SetFit/sst2':
-        encoded_val_dataset = val_dataset.map(
-            lambda e: tokenizer(e[CFG.example_name[args.dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True,
-            batch_size=len(val_dataset))
-        encoded_val_dataset = encoded_val_dataset.remove_columns([CFG.example_name[args.dataset]])
-        if args.dataset == 'SetFit/sst2':
-            encoded_val_dataset = encoded_val_dataset.remove_columns(['label_text'])
-        if args.dataset == 'dbpedia_14':
-            encoded_val_dataset = encoded_val_dataset.remove_columns(['title'])
-        encoded_val_dataset = encoded_val_dataset[:len(encoded_val_dataset)]
-
 
     concept_set = CFG.concept_set[args.dataset]
     print("concept len: ", len(concept_set))
@@ -120,12 +98,6 @@ if __name__ == "__main__":
     prefix = "./"
     if args.labeling == 'mpnet':
         prefix += "mpnet_acs"
-    elif args.labeling == 'simcse':
-        prefix += "simcse_acs"
-    elif args.labeling == 'angle':
-        prefix += "angle_acs"
-    elif args.labeling == 'llm':
-        prefix += "llm_labeling"
 
     prefix += "/"
     prefix += d_name
@@ -146,21 +118,11 @@ if __name__ == "__main__":
                     if train_similarity[i][j] < 0.0:
                         train_similarity[i][j] = 0.0
 
-        if args.dataset == 'SetFit/sst2':
-            for i in range(val_similarity.shape[0]):
-                for j in range(len(concept_set)):
-                    if get_labels(j, args.dataset) != encoded_val_dataset["label"][i]:
-                        val_similarity[i][j] = 0.0
-                    else:
-                        if val_similarity[i][j] < 0.0:
-                            val_similarity[i][j] = 0.0
         end = time.time()
         print("time of trainng intervention:", (end - start) / 3600, "hours")
 
     print("creating loader...")
     train_loader = build_loaders(encoded_train_dataset, train_similarity, mode="train")
-    if args.dataset == 'SetFit/sst2':
-        val_loader = build_loaders(encoded_val_dataset, val_similarity, mode="valid")
 
     if args.backbone == 'roberta':
         if args.tune_cbl_only:
@@ -283,4 +245,5 @@ if __name__ == "__main__":
                 torch.save(backbone_cbl.state_dict(), prefix + model_name + ".pt")
 
     end = time.time()
+
     print("time of training CBL:", (end - start) / 3600, "hours")
