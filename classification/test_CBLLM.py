@@ -62,10 +62,7 @@ if __name__ == "__main__":
 
     encoded_test_dataset = test_dataset.map(lambda e: tokenizer(e[CFG.example_name[dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True, batch_size=len(test_dataset))
     encoded_test_dataset = encoded_test_dataset.remove_columns([CFG.example_name[dataset]])
-    if dataset == 'SetFit/sst2':
-        encoded_test_dataset = encoded_test_dataset.remove_columns(['label_text'])
-    if dataset == 'dbpedia_14':
-        encoded_test_dataset = encoded_test_dataset.remove_columns(['title'])
+  
     encoded_test_dataset = encoded_test_dataset[:len(encoded_test_dataset)]
 
     print("creating loader...")
@@ -147,4 +144,5 @@ if __name__ == "__main__":
     with torch.torch.no_grad():
         pred = np.argmax(final(test_c).detach().numpy(), axis=-1)
     metric.add_batch(predictions=pred, references=encoded_test_dataset["label"])
+
     print(metric.compute())
