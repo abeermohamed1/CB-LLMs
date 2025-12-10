@@ -49,9 +49,6 @@ print("loading data...")
 train_dataset = load_dataset(args.dataset, split='train')
 
 print("training data len: ", len(train_dataset))
-if args.dataset == 'SetFit/sst2':
-    print("val data len: ", len(val_dataset))
-
 
 concept_set = CFG.concept_set[args.dataset]
 print("concept len: ", len(concept_set))
@@ -73,8 +70,6 @@ encoded_sim_train_dataset = encoded_sim_train_dataset.remove_columns([CFG.exampl
 encoded_c = tokenizer_sim(concept_set, padding=True, truncation=True, max_length=args.max_length)
 
 train_sim_loader = build_sim_loaders(encoded_sim_train_dataset)
-if args.dataset == 'SetFit/sst2':
-    val_sim_loader = build_sim_loaders(encoded_sim_val_dataset)
 
 print("getting concept labels...")
 encoded_c = {k: torch.tensor(v).to(device) for k, v in encoded_c.items()}
@@ -117,6 +112,7 @@ np.save(prefix + "concept_labels_train.npy", train_similarity)
 if args.dataset == 'SetFit/sst2':
 
     np.save(prefix + "concept_labels_val.npy", val_similarity)
+
 
 
 
