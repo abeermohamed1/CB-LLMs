@@ -37,10 +37,7 @@ class SimDataset(torch.utils.data.Dataset):
 
 def build_sim_loaders(encode_sim):
     dataset = SimDataset(encode_sim)
-    if args.concept_text_sim_model == 'angle':
-        batch_size = 8
-    else:
-        batch_size = 256
+    batch_size = 256
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, num_workers=args.num_workers, shuffle=False)
     return dataloader
 
@@ -112,6 +109,7 @@ np.save(prefix + "concept_labels_train.npy", train_similarity)
 if args.dataset == 'SetFit/sst2':
 
     np.save(prefix + "concept_labels_val.npy", val_similarity)
+
 
 
 
