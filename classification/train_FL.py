@@ -62,12 +62,6 @@ if __name__ == "__main__":
 
     if 'roberta' in backbone:
         tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
-    elif 'gpt2' in backbone:
-        tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
-        tokenizer.pad_token = tokenizer.eos_token
-    else:
-        raise Exception("backbone should be roberta or gpt2")
-
 
     encoded_train_dataset = train_dataset.map(lambda e: tokenizer(e[CFG.example_name[dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True, batch_size=len(train_dataset))
     encoded_train_dataset = encoded_train_dataset.remove_columns([CFG.example_name[dataset]])
@@ -93,27 +87,6 @@ if __name__ == "__main__":
             cbl.eval()
             preLM = RobertaModel.from_pretrained('roberta-base').to(device)
             preLM.eval()
-        else:
-            print("preparing backbone(roberta)+CBL...")
-            backbone_cbl = RobertaCBL(len(concept_set), args.dropout).to(device)
-            backbone_cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
-            backbone_cbl.eval()
-    elif 'gpt2' in backbone:
-        if 'no_backbone' in cbl_name:
-            print("preparing CBL only...")
-            cbl = CBL(len(concept_set), args.dropout).to(device)
-            cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
-            cbl.eval()
-            preLM = GPT2Model.from_pretrained('gpt2').to(device)
-            preLM.eval()
-        else:
-            print("preparing backbone(gpt2)+CBL...")
-            backbone_cbl = GPT2CBL(len(concept_set), args.dropout).to(device)
-            backbone_cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
-            backbone_cbl.eval()
-    else:
-        raise Exception("backbone should be roberta or gpt2")
-
 
     print("get concept features...")
     FL_train_features = []
@@ -126,13 +99,8 @@ if __name__ == "__main__":
                 train_features = preLM(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"]).last_hidden_state
                 if args.backbone == 'roberta':
                     train_features = train_features[:, 0, :]
-                elif args.backbone == 'gpt2':
-                    train_features = eos_pooling(train_features, batch["attention_mask"])
-                else:
-                    raise Exception("backbone should be roberta or gpt2")
                 train_features = cbl(train_features)
-            else:
-                train_features = backbone_cbl(batch)
+            
             FL_train_features.append(train_features)
 
     for batch in test_loader:
@@ -142,13 +110,7 @@ if __name__ == "__main__":
                 test_features = preLM(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"]).last_hidden_state
                 if args.backbone == 'roberta':
                     test_features = test_features[:, 0, :]
-                elif args.backbone == 'gpt2':
-                    test_features = eos_pooling(test_features, batch["attention_mask"])
-                else:
-                    raise Exception("backbone should be roberta or gpt2")
                 test_features = cbl(test_features)
-            else:
-                test_features = backbone_cbl(batch)
             FL_test_features.append(test_features)
 
     train_c = torch.cat(FL_train_features, dim=0).detach().cpu()
@@ -209,5 +171,6 @@ if __name__ == "__main__":
     torch.save(b_g, prefix + 'b_g' + model_name)
     torch.save(W_g_sparse, prefix + 'W_g_sparse' + model_name)
     torch.save(b_g_sparse, prefix + 'b_g_sparse' + model_name)
+
 
 
