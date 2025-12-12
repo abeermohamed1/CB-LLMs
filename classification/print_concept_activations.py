@@ -53,18 +53,11 @@ if __name__ == "__main__":
     print("tokenizing...")
     if 'roberta' in backbone:
         tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
-    elif 'gpt2' in backbone:
-        tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
-        tokenizer.pad_token = tokenizer.eos_token
-    else:
-        raise Exception("backbone should be roberta or gpt2")
 
     encoded_test_dataset = test_dataset.map(lambda e: tokenizer(e[CFG.example_name[dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True, batch_size=len(test_dataset))
     encoded_test_dataset = encoded_test_dataset.remove_columns([CFG.example_name[dataset]])
     if dataset == 'SetFit/sst2':
         encoded_test_dataset = encoded_test_dataset.remove_columns(['label_text'])
-    if dataset == 'dbpedia_14':
-        encoded_test_dataset = encoded_test_dataset.remove_columns(['title'])
     encoded_test_dataset = encoded_test_dataset[:len(encoded_test_dataset)]
 
     print("creating loader...")
@@ -80,27 +73,7 @@ if __name__ == "__main__":
             cbl.eval()
             preLM = RobertaModel.from_pretrained('roberta-base').to(device)
             preLM.eval()
-        else:
-            print("preparing backbone(roberta)+CBL...")
-            backbone_cbl = RobertaCBL(len(concept_set), args.dropout).to(device)
-            backbone_cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
-            backbone_cbl.eval()
-    elif 'gpt2' in backbone:
-        if 'no_backbone' in cbl_name:
-            print("preparing CBL only...")
-            cbl = CBL(len(concept_set), args.dropout).to(device)
-            cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
-            cbl.eval()
-            preLM = GPT2Model.from_pretrained('gpt2').to(device)
-            preLM.eval()
-        else:
-            print("preparing backbone(gpt2)+CBL...")
-            backbone_cbl = GPT2CBL(len(concept_set), args.dropout).to(device)
-            backbone_cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
-            backbone_cbl.eval()
-    else:
-        raise Exception("backbone should be roberta or gpt2")
-
+            
     print("get concept features...")
     FL_test_features = []
     for batch in test_loader:
@@ -111,13 +84,7 @@ if __name__ == "__main__":
                                       attention_mask=batch["attention_mask"]).last_hidden_state
                 if args.backbone == 'roberta':
                     test_features = test_features[:, 0, :]
-                elif args.backbone == 'gpt2':
-                    test_features = eos_pooling(test_features, batch["attention_mask"])
-                else:
-                    raise Exception("backbone should be roberta or gpt2")
                 test_features = cbl(test_features)
-            else:
-                test_features = backbone_cbl(batch)
             FL_test_features.append(test_features)
     test_c = torch.cat(FL_test_features, dim=0).detach().cpu()
 
@@ -164,3 +131,4 @@ if __name__ == "__main__":
                 else:
                     f.write('\n')
             f.write('\n')
+
