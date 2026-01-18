@@ -67,6 +67,7 @@ if __name__ == "__main__":
     backbone = args.cbl_path.split("/")[2]
     backbone = 'roberta'
     cbl_name = args.cbl_path.split("/")[-1]
+    cbl_name = 'no_backbone'
     
     print(f"Processing Dataset: {dataset_name} | Backbone: {backbone}")
 
