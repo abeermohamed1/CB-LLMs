@@ -63,7 +63,7 @@ if __name__ == "__main__":
     print("tokenizing...")
 
     if 'roberta' in backbone:
-        tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
+        tokenizer = RobertaTokenizerFast.from_pretrained('distilroberta-base')
     elif 'gpt2' in backbone:
         tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
         tokenizer.pad_token = tokenizer.eos_token
@@ -110,10 +110,10 @@ if __name__ == "__main__":
             cbl = CBL(len(concept_set), args.dropout).to(device)
             cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
             cbl.eval()
-            preLM = RobertaModel.from_pretrained('roberta-base').to(device)
+            preLM = RobertaModel.from_pretrained('distilroberta-base').to(device)
             preLM.eval()
         else:
-            print("preparing backbone(roberta)+CBL...")
+            print("preparing backbone(distilroberta-base)+CBL...")
             backbone_cbl = RobertaCBL(len(concept_set), args.dropout).to(device)
             backbone_cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
             backbone_cbl.eval()
@@ -264,4 +264,5 @@ if __name__ == "__main__":
     torch.save(b_g, prefix + 'b_g' + model_name)
     torch.save(W_g_sparse, prefix + 'W_g_sparse' + model_name)
     torch.save(b_g_sparse, prefix + 'b_g_sparse' + model_name)
+
 
