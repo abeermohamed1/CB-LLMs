@@ -22,7 +22,7 @@ class CBL(nn.Module):
 class RobertaCBL(nn.Module):
     def __init__(self, concept_dim, dropout):
         super().__init__()
-        self.preLM = RobertaModel.from_pretrained('roberta-base')
+        self.preLM = RobertaModel.from_pretrained('distilroberta-base')
         for p in self.preLM.parameters():
             p.requires_grad = True
         self.projection = nn.Linear(768, concept_dim)
@@ -63,7 +63,7 @@ class GPT2CBL(nn.Module):
 class Roberta_Baseline(nn.Module):
     def __init__(self, class_num, projection_dim, dropout):
         super().__init__()
-        self.preLM = RobertaModel.from_pretrained('roberta-base')
+        self.preLM = RobertaModel.from_pretrained('distilroberta-base')
         for p in self.preLM.parameters():
             p.requires_grad = True
         self.projection = nn.Linear(768, projection_dim)
