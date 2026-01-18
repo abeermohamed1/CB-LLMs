@@ -10,6 +10,7 @@ import config as CFG
 from modules import CBL, RobertaCBL, GPT2CBL
 from utils import cos_sim_cubed, get_labels, eos_pooling
 import time
+import sys # Added import statement for sys
 
 parser = argparse.ArgumentParser()
 
@@ -20,12 +21,12 @@ parser.add_argument('--tune_cbl_only', action=argparse.BooleanOptionalAction)
 parser.add_argument('--automatic_concept_correction', action=argparse.BooleanOptionalAction)
 parser.add_argument("--labeling", type=str, default="mpnet", help="mpnet, angle, simcse, llm")
 parser.add_argument("--cbl_only_batch_size", type=int, default=64)
-parser.add_argument("--batch_size", type=int, default=16)
+parser.add_argument("--batch_size", type=int, default=4)
 
 parser.add_argument("--max_length", type=int, default=512)
 parser.add_argument("--num_workers", type=int, default=0)
 parser.add_argument("--dropout", type=float, default=0.1)
-
+parser.add_argument("--sample_size", type=int, default=-1) # New argument for sampling
 
 class ClassificationDataset(torch.utils.data.Dataset):
     def __init__(self, encode_roberta, s):
@@ -55,14 +56,22 @@ def build_loaders(encode_roberta, s, mode):
 
 if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    args = parser.parse_args()
+    args = parser.parse_args(sys.argv[1:]) # Modified line
 
     print("loading data...")
     train_dataset = load_dataset(args.dataset, split='train')
     if args.dataset == 'SetFit/sst2':
         val_dataset = load_dataset(args.dataset, split='validation')
+
+    # Implement sampling logic
+    if args.sample_size > 0:
+        print(f"Sampling {args.sample_size} examples from training and validation datasets...")
+        train_dataset = train_dataset.shuffle(seed=42).select(range(args.sample_size))
+        if args.dataset == 'SetFit/sst2':
+            val_dataset = val_dataset.shuffle(seed=42).select(range(args.sample_size))
+
     print("training data len: ", len(train_dataset))
-    if args.dataset == 'SetFit/sst2':
+    if args.dataset == 'SetFit/sst2' : # Updated condition
         print("val data len: ", len(val_dataset))
     print("tokenizing...")
 
@@ -72,7 +81,7 @@ if __name__ == "__main__":
             d_list.append(
                 train_dataset.filter(lambda e: e['label'] == i).select(range(1000 // CFG.class_num[args.dataset])))
         train_dataset = concatenate_datasets(d_list)
-        if args.dataset == 'SetFit/sst2':
+        if args.dataset == 'SetFit/sst2' : # Updated condition
             d_list = []
             for i in range(CFG.class_num[args.dataset]):
                 d_list.append(
@@ -80,11 +89,11 @@ if __name__ == "__main__":
             val_dataset = concatenate_datasets(d_list)
 
         print("training labeled data len: ", len(train_dataset))
-        if args.dataset == 'SetFit/sst2':
+        if args.dataset == 'SetFit/sst2' : # Updated condition
             print("val labeled data len: ", len(val_dataset))
 
     if args.backbone == 'roberta':
-        tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
+        tokenizer = RobertaTokenizerFast.from_pretrained('distilroberta-base')
     elif args.backbone == 'gpt2':
         tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
         tokenizer.pad_token = tokenizer.eos_token
@@ -101,7 +110,7 @@ if __name__ == "__main__":
         encoded_train_dataset = encoded_train_dataset.remove_columns(['title'])
     encoded_train_dataset = encoded_train_dataset[:len(encoded_train_dataset)]
 
-    if args.dataset == 'SetFit/sst2':
+    if args.dataset == 'SetFit/sst2': # Updated condition
         encoded_val_dataset = val_dataset.map(
             lambda e: tokenizer(e[CFG.example_name[args.dataset]], padding=True, truncation=True, max_length=args.max_length), batched=True,
             batch_size=len(val_dataset))
@@ -130,8 +139,9 @@ if __name__ == "__main__":
     prefix += "/"
     prefix += d_name
     prefix += "/"
-    train_similarity = np.load(prefix + "/concept_labels_train.npy")
-    if args.dataset == 'SetFit/sst2':
+    train_similarity = np.load("/content/CB-LLMs/classification/mpnet_acs/imdb/concept_labels_train.npy")
+ 
+    if args.dataset == 'SetFit/sst2': # Updated condition
         val_similarity = np.load(prefix + "/concept_labels_val.npy")
 
 
@@ -146,7 +156,7 @@ if __name__ == "__main__":
                     if train_similarity[i][j] < 0.0:
                         train_similarity[i][j] = 0.0
 
-        if args.dataset == 'SetFit/sst2':
+        if args.dataset == 'SetFit/sst2' : # Updated condition
             for i in range(val_similarity.shape[0]):
                 for j in range(len(concept_set)):
                     if get_labels(j, args.dataset) != encoded_val_dataset["label"][i]:
@@ -159,14 +169,14 @@ if __name__ == "__main__":
 
     print("creating loader...")
     train_loader = build_loaders(encoded_train_dataset, train_similarity, mode="train")
-    if args.dataset == 'SetFit/sst2':
+    if args.dataset == 'SetFit/sst2' : # Updated condition
         val_loader = build_loaders(encoded_val_dataset, val_similarity, mode="valid")
 
     if args.backbone == 'roberta':
         if args.tune_cbl_only:
             print("preparing CBL only...")
             cbl = CBL(len(concept_set), args.dropout).to(device)
-            preLM = RobertaModel.from_pretrained('roberta-base').to(device)
+            preLM = RobertaModel.from_pretrained('distilroberta-base').to(device)
             preLM.eval()
             optimizer = torch.optim.Adam(cbl.parameters(), lr=1e-4)
         else:
@@ -212,28 +222,43 @@ if __name__ == "__main__":
     for e in range(epochs):
         print("Epoch ", e+1, ":")
         if args.tune_cbl_only:
+            print ("args.tune_cbl_only")
+            print ("args.tune_cbl_only",args.tune_cbl_only)
             cbl.train()
+            print ("end args.tune_cbl_only")
         else:
+            print (" backbone_cbl.train")
             backbone_cbl.train()
         training_loss = []
         for i, batch in enumerate(train_loader):
+            print ("start for i, batch in enumerate(train_loader)")
+            #print ("i, batch", i, batch)
+            #print ("train_loader", train_loader)
             batch_text, batch_sim = batch[0], batch[1]
+            #print ("batch_text", batch_text)
+            #print ("batch_sim", batch_sim)
             batch_text = {k: v.to(device) for k, v in batch_text.items()}
             batch_sim = batch_sim.to(device)
-
+            #print ("after  batch_sim.to(device)", batch_sim)
             if args.tune_cbl_only:
                 with torch.no_grad():
+                    print ("torch.no_grad()")
                     LM_features = preLM(input_ids=batch_text["input_ids"], attention_mask=batch_text["attention_mask"]).last_hidden_state
+                    #print ("LM_features", LM_features)
                     if args.backbone == 'roberta':
+                        print ("if args.backbone")
                         LM_features = LM_features[:, 0, :]
+                        #print ("after LM_features", LM_features)
                     elif args.backbone == 'gpt2':
                         LM_features = eos_pooling(LM_features, batch_text["attention_mask"])
                     else:
                         raise Exception("backbone should be roberta or gpt2")
                 cbl_features = cbl(LM_features)
+                #print ("after cbl_features", cbl_features)
             else:
                 cbl_features = backbone_cbl(batch_text)
             loss = -cos_sim_cubed(cbl_features, batch_sim)
+            print ("after loss", loss)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -242,7 +267,7 @@ if __name__ == "__main__":
         avg_training_loss = sum(training_loss)/len(training_loss)
         print("training loss: ", avg_training_loss)
 
-        if args.dataset == 'SetFit/sst2':
+        if args.dataset == 'SetFit/sst2' : # Updated condition
             if args.tune_cbl_only:
                 cbl.eval()
             else:
