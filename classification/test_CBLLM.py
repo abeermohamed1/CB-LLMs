@@ -53,7 +53,7 @@ if __name__ == "__main__":
     print("test data len: ", len(test_dataset))
     print("tokenizing...")
     if 'roberta' in backbone:
-        tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
+        tokenizer = RobertaTokenizerFast.from_pretrained('distilroberta-base')
     elif 'gpt2' in backbone:
         tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
         tokenizer.pad_token = tokenizer.eos_token
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             cbl = CBL(len(concept_set), args.dropout).to(device)
             cbl.load_state_dict(torch.load(args.cbl_path, map_location=device))
             cbl.eval()
-            preLM = RobertaModel.from_pretrained('roberta-base').to(device)
+            preLM = RobertaModel.from_pretrained('distilroberta-base').to(device)
             preLM.eval()
         else:
             print("preparing backbone(roberta)+CBL...")
@@ -147,4 +147,5 @@ if __name__ == "__main__":
     with torch.torch.no_grad():
         pred = np.argmax(final(test_c).detach().numpy(), axis=-1)
     metric.add_batch(predictions=pred, references=encoded_test_dataset["label"])
+
     print(metric.compute())
