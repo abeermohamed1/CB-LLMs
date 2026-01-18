@@ -63,6 +63,8 @@ def get_labels(n, d):
         return agnews_labels(n)
     if d == 'dbpedia_14':
         return dbpedia_labels(n)
+    if d == 'imdb':
+        return imdb_labels(n) # New addition
 
     return None
 
@@ -117,3 +119,11 @@ def dbpedia_labels(n):
         return 12
     else:
         return 13
+
+def imdb_labels(n):
+    # Assuming the first 20 concepts are negative and the next 20 are positive
+    # (based on the example concepts.py modification, total 40 concepts)
+    if n < 20:
+        return 0 # Negative
+    else:
+        return 1 # Positive
