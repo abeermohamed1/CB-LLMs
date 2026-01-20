@@ -3,24 +3,22 @@ import os
 import torch
 import torch.nn.functional as F
 import numpy as np
-from transformers import RobertaTokenizerFast, RobertaModel, GPT2TokenizerFast, GPT2Model
+from transformers import RobertaTokenizerFast, RobertaModel
 from datasets import load_dataset
-import evaluate
 import config as CFG
-from modules import CBL, RobertaCBL, GPT2CBL
-from utils import normalize, eos_pooling
+from modules import CBL
+from utils import normalize
 
+# --- SETTINGS ---
 parser = argparse.ArgumentParser()
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-parser.add_argument("--cbl_path", type=str, default="mpnet_acs/SetFit_sst2/roberta_cbm/cbl.pt")
-parser.add_argument('--sparse', action=argparse.BooleanOptionalAction)
-parser.add_argument("--batch_size", type=int, default=256)
+
+parser.add_argument("--cbl_path", type=str, required=True, help="Path to your model_best.pth.tar")
+parser.add_argument("--batch_size", type=int, default=128)
 parser.add_argument("--max_length", type=int, default=512)
-parser.add_argument("--num_workers", type=int, default=0)
 parser.add_argument("--dropout", type=float, default=0.1)
 
-# --- CHANGE 1: Updated Dataset class for HF Compatibility ---
+# --- DATASET CLASS ---
 class ClassificationDataset(torch.utils.data.Dataset):
     def __init__(self, texts):
         self.texts = texts
@@ -35,109 +33,112 @@ class ClassificationDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.texts)
 
-# --- CHANGE 2: Smart Loading Function (Matches train_FL) ---
-def load_cbl_weights(model, path):
-    print(f"Loading weights from {path}...")
-    checkpoint = torch.load(path, map_location=device)
-    if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
-        print("Detected checkpoint format (.pth.tar).")
-        model.load_state_dict(checkpoint['state_dict'])
-    else:
-        print("Detected raw weight format (.pt).")
-        model.load_state_dict(checkpoint)
-    return model
-
-def build_loaders(texts, mode):
-    dataset = ClassificationDataset(texts)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
-                                             shuffle=False)
-    return dataloader
-
 if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     args = parser.parse_args()
 
-    # Manual overrides for consistency
-    dataset_name = "imdb" # Change to 'SetFit/sst2' if needed
-    backbone = 'roberta'
+    # Automatic path detection based on your structure
+    # Expected: checkpoints/mpnet_imdb/model_best.pth.tar
+    acs = args.cbl_path.split("/")[0] # e.g. checkpoints
+    dataset_name = "imdb" 
+    backbone = "roberta"
     
-    acs = args.cbl_path.split("/")[0]
-    cbl_name = args.cbl_path.split("/")[-1]
-    
-    print("loading data...")
+    # Path where W_g_cbl_final and b_g_cbl_final live
+    # Adjust this if your results are in a different folder
+    results_prefix = f"./results/{acs}/{dataset_name}/{backbone}/"
+
+    print(f"--- Loading Data: {dataset_name} ---")
     test_dataset = load_dataset(dataset_name, split='test')
     
-    print("tokenizing...")
-    if 'roberta' in backbone:
-        tokenizer = RobertaTokenizerFast.from_pretrained('distilroberta-base')
-    elif 'gpt2' in backbone:
-        tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
-        tokenizer.pad_token = tokenizer.eos_token
-
-    # Keep as Dataset object for efficiency
-    encoded_test_dataset = test_dataset.map(lambda e: tokenizer(e[CFG.example_name[dataset_name]], padding=True, truncation=True, max_length=args.max_length), batched=True)
-
-    print("creating loader...")
-    test_loader = build_loaders(encoded_test_dataset, mode="test")
+    print("Tokenizing...")
+    tokenizer = RobertaTokenizerFast.from_pretrained('distilroberta-base')
+    encoded_test = test_dataset.map(
+        lambda e: tokenizer(e[CFG.example_name[dataset_name]], 
+                            padding='max_length', 
+                            truncation=True, 
+                            max_length=args.max_length), 
+        batched=True
+    )
+    
+    test_loader = torch.utils.data.DataLoader(
+        ClassificationDataset(encoded_test), 
+        batch_size=args.batch_size, 
+        shuffle=False
+    )
 
     concept_set = CFG.concept_set[dataset_name]
+    num_concepts = len(concept_set)
 
-    # --- CHANGE 3: Using Smart Loader for Model Init ---
-    if 'roberta' in backbone:
-        if 'no_backbone' in cbl_name:
-            print("preparing CBL only...")
-            cbl = CBL(len(concept_set), args.dropout).to(device)
-            cbl = load_cbl_weights(cbl, args.cbl_path)
-            cbl.eval()
-            preLM = RobertaModel.from_pretrained('distilroberta-base').to(device)
-            preLM.eval()
-        else:
-            print("preparing backbone(roberta)+CBL...")
-            backbone_cbl = RobertaCBL(len(concept_set), args.dropout).to(device)
-            backbone_cbl = load_cbl_weights(backbone_cbl, args.cbl_path)
-            backbone_cbl.eval()
+    # --- MODEL LOADING ---
+    print("Initializing Model Components...")
     
-    # ... GPT2 logic would follow same load_cbl_weights pattern ...
+    # 1. Load the Backbone (Standard DistilRoBERTa)
+    preLM = RobertaModel.from_pretrained('distilroberta-base').to(device)
+    preLM.eval()
 
-    print("get concept features...")
+    # 2. Load the CBL layer (The 40 concepts)
+    cbl = CBL(num_concepts, args.dropout).to(device)
+    checkpoint = torch.load(args.cbl_path, map_location=device)
+    
+    # Extract state_dict if it's in a .pth.tar wrapper
+    state_dict = checkpoint['state_dict'] if 'state_dict' in checkpoint else checkpoint
+    cbl.load_state_dict(state_dict)
+    cbl.eval()
+
+    # 3. Load the Final SAGA Weights
+    print(f"Loading weights from: {results_prefix}")
+    #W_g = torch.load(os.path.join(results_prefix, "W_g_cbl_final"), map_location=device)
+    #b_g = torch.load(os.path.join(results_prefix, "b_g_cbl_final"), map_location=device)
+
+    # 3. Load the Final SAGA Weights
+    print(f"Loading weights into memory...")
+    # Path to your files
+    w_path = './checkpoints/mpnet_imdb/W_g_cbl_final'
+    b_path = './checkpoints/mpnet_imdb/b_g_cbl_final'
+
+    # Load the actual Tensors from the disk
+    W_g = torch.load(w_path, map_location=device)
+    b_g = torch.load(b_path, map_location=device)
+
+    # Safety check: if the file was saved as a dict, extract the tensor
+    if isinstance(W_g, dict):
+        W_g = W_g.get('weight', W_g.get('W_g', W_g))
+    if isinstance(b_g, dict):
+        b_g = b_g.get('bias', b_g.get('b_g', b_g))
+
+    print(f"Weights loaded. Shape: {W_g.shape}")
+    # --- INFERENCE ---
+    print("Running Inference...")
+    all_preds = []
+    all_labels = np.array(encoded_test['label'])
+    
+    # To store concept activations for normalization if needed
     FL_test_features = []
-    for batch in test_loader:
-        batch = {k: v.to(device) for k, v in batch.items()}
-        with torch.no_grad():
-            if 'no_backbone' in cbl_name:
-                test_features = preLM(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"]).last_hidden_state
-                test_features = test_features[:, 0, :] if 'roberta' in backbone else eos_pooling(test_features, batch["attention_mask"])
-                test_features = cbl(test_features)
-            else:
-                test_features = backbone_cbl(batch)
-            FL_test_features.append(test_features)
-    test_c = torch.cat(FL_test_features, dim=0).detach().cpu()
 
-    # --- CHANGE 4: Updated Naming to match train_FL suffix logic ---
-    prefix = "./" + acs + "/" + dataset_name.replace('/', '_') + "/" + backbone + "/"
-    model_suffix = "_" + cbl_name.replace('.pt', '').replace('.pth.tar', '')
-    
-    train_mean = torch.load(prefix + 'train_mean' + model_suffix)
-    train_std = torch.load(prefix + 'train_std' + model_suffix)
-
-    test_c, _, _ = normalize(test_c, d=0, mean=train_mean, std=train_std)
-    test_c = F.relu(test_c)
-
-    final = torch.nn.Linear(in_features=len(concept_set), out_features=CFG.class_num[dataset_name])
-    
-    # Determine which weights to load (Dense vs Sparse)
-    weight_type = "W_g_sparse" if args.sparse else "W_g"
-    bias_type = "b_g_sparse" if args.sparse else "b_g"
-    
-    W_g = torch.load(prefix + weight_type + model_suffix)
-    b_g = torch.load(prefix + bias_type + model_suffix)
-    
-    final.load_state_dict({"weight": W_g, "bias": b_g})
-    metric = evaluate.load("accuracy")
-    
     with torch.no_grad():
-        logits = final(test_c)
-        pred = torch.argmax(logits, dim=-1).numpy()
+        for batch in test_loader:
+            batch = {k: v.to(device) for k, v in batch.items()}
+            
+            # Step A: Get RoBERTa Features (CLS Token)
+            features = preLM(input_ids=batch["input_ids"], 
+                             attention_mask=batch["attention_mask"]).last_hidden_state[:, 0, :]
+            
+            # Step B: Pass through CBL to get Concept Activations
+            concept_activations = cbl(features)
+            
+            # Apply ReLU as per CB-LLM architecture
+            concept_activations = F.relu(concept_activations)
+            
+            # Step C: Final Prediction (Linear Layer)
+            logits = torch.matmul(concept_activations, W_g.t()) + b_g
+            preds = torch.argmax(logits, dim=-1)
+            
+            all_preds.append(preds.cpu().numpy())
+
+    # --- RESULTS ---
+    all_preds = np.concatenate(all_preds)
+    accuracy = (all_preds == all_labels).mean()
     
-    results = metric.compute(predictions=pred, references=encoded_test_dataset["label"])
-    print(f"Results ({'Sparse' if args.sparse else 'Dense'}): {results}")
+    print("-" * 30)
+    print(f"TEST ACCURACY: {accuracy * 100:.2f}%")
+    print("-" * 30)
