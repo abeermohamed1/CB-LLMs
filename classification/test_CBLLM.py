@@ -50,6 +50,14 @@ if __name__ == "__main__":
     print(f"--- Loading Data: {dataset_name} ---")
     test_dataset = load_dataset(dataset_name, split='test')
     
+    # --- NEW: SAMPLE THE DATASET ---
+    # Change 1000 to whatever number of samples you want to test
+    sample_size = 1000 
+    indices = np.random.choice(range(len(test_dataset)), size=sample_size, replace=False)
+    test_dataset = test_dataset.select(indices)
+    print(f"Sampled {sample_size} examples for quick testing.")
+    # -------------------------------
+
     print("Tokenizing...")
     tokenizer = RobertaTokenizerFast.from_pretrained('distilroberta-base')
     encoded_test = test_dataset.map(
