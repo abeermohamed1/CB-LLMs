@@ -53,9 +53,20 @@ if __name__ == "__main__":
     dataset_name = "imdb" # Standardized for your current run
     backbone = 'roberta'
     cbl_name = args.cbl_path.split("/")[-1]
+    dataset_name = 'imdb'
+    backbone = 'roberta'
+    cbl_name = 'no_backbone' # Forces logic to 'CBL only'
 
     print(f"Loading data for: {dataset_name}")
     test_dataset = load_dataset(dataset_name, split='test')
+  
+    # --- NEW: SAMPLE THE DATASET ---
+    # Change 1000 to whatever number of samples you want to test
+    sample_size = 1000 
+    indices = np.random.choice(range(len(test_dataset)), size=sample_size, replace=False)
+    test_dataset = test_dataset.select(indices)
+    print(f"Sampled {sample_size} examples for quick testing.")
+    # -------------------------------
     
     tokenizer = RobertaTokenizerFast.from_pretrained('distilroberta-base')
     encoded_test_dataset = test_dataset.map(lambda e: tokenizer(e[CFG.example_name[dataset_name]], padding=True, truncation=True, max_length=args.max_length), batched=True)
