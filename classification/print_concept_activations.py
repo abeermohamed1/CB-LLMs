@@ -60,11 +60,21 @@ if __name__ == "__main__":
     dataset_name = args.cbl_path.split("/")[1] if 'sst2' not in args.cbl_path.split("/")[1] else args.cbl_path.split("/")[1].replace('_', '/')
     backbone = args.cbl_path.split("/")[2]
     cbl_name = args.cbl_path.split("/")[-1]
-    
+    dataset_name = 'imdb'
+    backbone = 'roberta'
+    cbl_name = 'no_backbone' # Forces logic to 'CBL only'
+
     print(f"Processing Activations for: {dataset_name}")
 
     print("loading data...")
     test_dataset = load_dataset(dataset_name, split='test')
+    # --- NEW: SAMPLE THE DATASET ---
+    # Change 1000 to whatever number of samples you want to test
+    sample_size = 1000 
+    indices = np.random.choice(range(len(test_dataset)), size=sample_size, replace=False)
+    test_dataset = test_dataset.select(indices)
+    print(f"Sampled {sample_size} examples for quick testing.")
+    # -------------------------------
     
     print("tokenizing...")
     if 'roberta' in backbone:
@@ -77,6 +87,7 @@ if __name__ == "__main__":
 
     print("creating loader...")
     test_loader = build_loaders(encoded_test_dataset, mode="test")
+    
 
     concept_set = CFG.concept_set[dataset_name]
 
