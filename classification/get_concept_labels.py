@@ -103,7 +103,7 @@ encoded_sim_train_dataset = train_dataset.map(
                             max_length=args.max_length), batched=True,
     batch_size=len(train_dataset))
 encoded_sim_train_dataset = encoded_sim_train_dataset.remove_columns([CFG.example_name[args.dataset]])
-print("end of remove train column")
+#print("end of remove train column")
 if args.dataset == 'SetFit/sst2':
     encoded_sim_train_dataset = encoded_sim_train_dataset.remove_columns(['label_text'])
 if args.dataset == 'dbpedia_14':
@@ -122,20 +122,20 @@ if args.dataset == 'SetFit/sst2' """or args.dataset == 'imdb'""":
     if args.dataset == 'dbpedia_14': # Keep this specific to dbpedia_14
         encoded_sim_val_dataset = encoded_sim_val_dataset.remove_columns(['title'])
     encoded_sim_val_dataset = encoded_sim_val_dataset[:len(encoded_sim_val_dataset)]
-print("start of tokenizer_sim")
+#print("start of tokenizer_sim")
 encoded_c = tokenizer_sim(concept_set, padding=True, truncation=True, max_length=args.max_length)
-print("end of tokenizer_sim")
+#print("end of tokenizer_sim")
 train_sim_loader = build_sim_loaders(encoded_sim_train_dataset)
-print("end of train_sim_loader")
+#print("end of train_sim_loader")
 # Modified: Build val_sim_loader for both SetFit/sst2 and imdb
 if args.dataset == 'SetFit/sst2' """or args.dataset == 'imdb'""":
     val_sim_loader = build_sim_loaders(encoded_sim_val_dataset)
 
-print("getting concept labels...")
+#print("getting concept labels...")
 encoded_c = {k: torch.tensor(v).to(device) for k, v in encoded_c.items()}
-print("start of encoded_c")
+#print("start of encoded_c")
 with torch.no_grad():
-    print("start of torch.no_grad(")
+    #print("start of torch.no_grad(")
     if args.concept_text_sim_model == 'mpnet':
         concept_features = sim_model(input_ids=encoded_c["input_ids"], attention_mask=encoded_c["attention_mask"])
         print("start of mean_pooling")
@@ -146,22 +146,22 @@ with torch.no_grad():
             concept_features = sim_model(output_hidden_states=True, input_ids=encoded_c["input_ids"], attention_mask=encoded_c["attention_mask"]).hidden_states[-1][:, -1].float()
     else:
         raise Exception("concept-text sim model should be mpnet, simcse or angle")
-    print("start of F.normalize")
+    #print("start of F.normalize")
     concept_features = F.normalize(concept_features, p=2, dim=1)
-    print("end of F.normalize")
+    #print("end of F.normalize")
 
 start = time.time()
-print("start of time.time")
+#print("start of time.time")
 train_sim = []
 for i, batch_sim in enumerate(train_sim_loader):
-    print("start of for i, batch_sim in enumerate")
+    #print("start of for i, batch_sim in enumerate")
     #print("print index =====",i)
     #print("print batch_sim =====",batch_sim)
     print("batch ", str(i), end="\r")
     batch_sim = {k: v.to(device) for k, v in batch_sim.items()}
     with torch.no_grad():
         if args.concept_text_sim_model == 'mpnet':
-            print("start of args.concept_text_sim_model == ")
+            #print("start of args.concept_text_sim_model == ")
             text_features = sim_model(input_ids=batch_sim["input_ids"], attention_mask=batch_sim["attention_mask"])
             #print("start of 1 text_features == ",text_features)
             text_features = mean_pooling(text_features, batch_sim["attention_mask"])
@@ -172,16 +172,16 @@ for i, batch_sim in enumerate(train_sim_loader):
             text_features = sim_model(output_hidden_states=True, input_ids=batch_sim["input_ids"], attention_mask=batch_sim["attention_mask"]).hidden_states[-1][:, -1].float()
         else:
             raise Exception("concept-text sim model should be mpnet, simcse or angle")
-        print("start of F.normalize(")
+        #print("start of F.normalize(")
         text_features = F.normalize(text_features, p=2, dim=1)
-    print("start of train_sim.append == ")
+    #print("start of train_sim.append == ")
     train_sim.append(text_features @ concept_features.T)
 #print("start of torch.cat(train_sim, dim=0)",train_sim)
 train_similarity = torch.cat(train_sim, dim=0).cpu().detach().numpy()
 #print("1 of train_similarity",train_similarity)
 end = time.time()
-print("start of time of concept scoring")
-print("time of concept scoring:", (end-start)/3600, "hours")
+#print("start of time of concept scoring")
+#print("time of concept scoring:", (end-start)/3600, "hours")
 
 # Modified: Generate val_similarity for both SetFit/sst2 and imdb
 if args.dataset == 'SetFit/sst2' """or args.dataset == 'imdb'""":
@@ -223,3 +223,4 @@ print("end of concept_labels_train")
 # Modified: Save val_similarity for both SetFit/sst2 and imdb
 if args.dataset == 'SetFit/sst2' """or args.dataset == 'imdb'""":
     np.save(prefix + "concept_labels_val.npy", val_similarity)
+
