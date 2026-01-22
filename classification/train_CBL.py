@@ -139,7 +139,7 @@ if __name__ == "__main__":
     prefix += "/"
     prefix += d_name
     prefix += "/"
-    train_similarity = np.load("/content/CB-LLMs/classification/mpnet_acs/imdb/concept_labels_train.npy")
+    train_similarity = np.load("/content/CB-LLMs/classification/mpnet_acs/ag_news/concept_labels_train.npy")
  
     if args.dataset == 'SetFit/sst2': # Updated condition
         val_similarity = np.load(prefix + "/concept_labels_val.npy")
@@ -222,16 +222,16 @@ if __name__ == "__main__":
     for e in range(epochs):
         print("Epoch ", e+1, ":")
         if args.tune_cbl_only:
-            print ("args.tune_cbl_only")
-            print ("args.tune_cbl_only",args.tune_cbl_only)
+            #print ("args.tune_cbl_only")
+            #print ("args.tune_cbl_only",args.tune_cbl_only)
             cbl.train()
-            print ("end args.tune_cbl_only")
+            #print ("end args.tune_cbl_only")
         else:
-            print (" backbone_cbl.train")
+            #print (" backbone_cbl.train")
             backbone_cbl.train()
         training_loss = []
         for i, batch in enumerate(train_loader):
-            print ("start for i, batch in enumerate(train_loader)")
+            #print ("start for i, batch in enumerate(train_loader)")
             #print ("i, batch", i, batch)
             #print ("train_loader", train_loader)
             batch_text, batch_sim = batch[0], batch[1]
@@ -309,3 +309,4 @@ if __name__ == "__main__":
 
     end = time.time()
     print("time of training CBL:", (end - start) / 3600, "hours")
+
