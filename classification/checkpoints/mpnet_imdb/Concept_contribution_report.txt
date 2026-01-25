@@ -18,16 +18,6 @@ Top Contributing Concepts:
 PREDICTION: 1 | STATUS: CORRECT
 --------------------------------------------------
 
-TEXT: Being a big fan of horror films and always manage to find something good about a picture, but this film just did not hold my interest or attention. This story revolves around a father and his daughter and a girlfriend, since his wife died a few years back. These people encounter a horrible situation in a town they stop off and visit and all the senior citizens in this town gang up against these people and almost kill them. This film reminded me of a film called "Children of the Corn" because it really involves children who are being presented to Satan and are his instruments of terror. There is plenty of chants, mambo jumble and a toy tank that completely destroys an entire family in their station wagon as well as dolls who kill a husband and wife.
-Top Contributing Concepts:
- - Well-paced narrative.: 0.1348
- - Cringeworthy scenes.: 0.0904
- - Heart-touching scenes.: 0.0751
- - Captivating storyline.: 0.0397
- - Unconvincing special effects.: 0.0280
-PREDICTION: 1 | STATUS: INCORRECT (Label: 0)
---------------------------------------------------
-
 TEXT: This one surprised me.<br /><br />I read a few reviews beforehand that called it a good B-grade movie and was prepared for the worst. Halfway through it I suddenly realised I was completely wrapped up in it and enjoying it a lot. There were some really tense moments that had you sitting forward fiddling nervously with the remote control or any other object in reach. Overall this movie definitely doesn't deserve the B-grade tag.<br /><br />Credit must be given to Director, Gary Ellis and writers, Bill Boatman & Todd King for their movie debut. I hope these guys continue with bigger budgets and some studio backing.
 Top Contributing Concepts:
  - Well-paced narrative.: 0.1335
@@ -68,16 +58,6 @@ Top Contributing Concepts:
 PREDICTION: 1 | STATUS: CORRECT
 --------------------------------------------------
 
-TEXT: WARNING! SPOILER! This movie is absolute crap. It is not entertainment. I haven't the words to describe the disgust that I felt at the end.<br /><br />This is a badly made movie about the scum of society. During the whole movie I kept waiting for it to get better. It didn't. Instead, it just kept getting worse and worse.<br /><br />When I see a movie that is as bad as this one I always try to find at least one good thing to say about it. In this case it proved impossible. I have not one good thing to say about it. How bad did it get? Well, here's an example: Towards the end Dan Akroyd smothers and kills Vincent D'Onofrio while Reeves and Diaz watch! This is not entertainment!
-Top Contributing Concepts:
- - Well-paced narrative.: 0.1272
- - Cringeworthy scenes.: 0.0997
- - Heart-touching scenes.: 0.0674
- - Captivating storyline.: 0.0485
- - Unconvincing special effects.: 0.0313
-PREDICTION: 1 | STATUS: INCORRECT (Label: 0)
---------------------------------------------------
-
 TEXT: Cassie (Sandra Bullock) is a hyper-serious police detective. As an ex-boyfriend once tried to kill her and, indeed, left her grievously wounded, she is determined to bring those who harm others to justice. As the result of her near-death experience, also, Cassie favors one-night stands and trusts no one. One day, a woman is found dead in the woods near Cassie's community. She has been murdered heinously, beaten severely and left to die alone. Naturally, Cassie will stop at nothing to find the murderers. Assigned to help her is fellow officer, Sam (Ben Chaplin). He soon discovers Cassie's relentless attitude and all-consuming instincts when she asks him to pick up a sample of vomit that has been left at the scene for analysis, among other actions. The trail soon leads them to two high school students, Richard (Ryan Gosling) and Justin (Michael Pitt). Could these teenagers really be responsible for the planning and execution of the perfect "joy" killing? This is an intriguing film, but viewers should be warned that the subject matter is grim indeed. Killing for the "sport" of it is seldom the topic of films that are of the "all sweetness and light" variety and this one is no different. That said, the cast is great. Bullock, without a hint of her talent for comedy, is terrific as the police officer whose own past compels her to lock up the evil folks of the world. Chaplin, too, is quite nice as the detective who is both attracted and repelled by the forceful Cassie. As for Gosling, he gives a most memorable performance as a brilliant mind with a satanic soul. The production values for the movie are good, too, with appropriately fine costumes, settings and photography. If you are a fan of Bullock's looking for a laugh, this is not the one for you. But, if you adore mysteries, even those with the grimmest of plots, you will find this tale enthralling.
 Top Contributing Concepts:
  - Well-paced narrative.: 0.1453
@@ -108,16 +88,6 @@ Top Contributing Concepts:
 PREDICTION: 1 | STATUS: CORRECT
 --------------------------------------------------
 
-TEXT: I'm surprised that the comparison hasn't been made yet between Mind of Mencia and the television program The Awful Truth, which ran a few years ago. Helmed by controversial director Michael Moore, the show would begin, in the exact same manor as this show, with Moore interacting with the audience, and introducing segments, namely short documentaries and skits, which had been put together in an attempt to provoke thoughts about current issues. The difference? Mencia rarely delves past the superficial and the reactionary. What he says and does is often pandering and rude, and insults the ability of his audience to make decisions for themselves. There's a difference between being "edgy", which I have no problem with, but Mencia tries too hard to accomplish this, and ends up coming off as arrogant, and with little backing. He does however, make points occasionally, but often in order to get to them, one has to sit through some pretty mind numbing attempted shock humor.
-Top Contributing Concepts:
- - Well-paced narrative.: 0.1337
- - Cringeworthy scenes.: 0.0840
- - Heart-touching scenes.: 0.0763
- - Captivating storyline.: 0.0367
- - Unconvincing special effects.: 0.0291
-PREDICTION: 1 | STATUS: INCORRECT (Label: 0)
---------------------------------------------------
-
 TEXT: Despite what its critics ensue, I enjoyed immensely for precisely what it is. Eyecandy for both sides of the gender spectrum. Soderberg has done the artsy hard edge stuff before, won Oscars, is at the top of his game. Ocean's 12 is light, commercial, fluffy, Steve's day at the Midway if you will. I am generally not a fan of Zeta-Jones but even I must admit that Kate is STUNNING in this movie. It's ending screams of an upcoming trequel and I will be one of the millions who flock to see 120 minutes of George and Brad and Matt parlay through Clooney's digs in Lago di Como as they swindle some rich bad guy again and again. If we tolerated 3 installments of the Lord of the Rings, I ask if we can drool over Clooney's salt and pepper lid just one more time?
 Top Contributing Concepts:
  - Well-paced narrative.: 0.1374
@@ -126,16 +96,6 @@ Top Contributing Concepts:
  - Unconvincing special effects.: 0.0269
  - Captivating storyline.: 0.0211
 PREDICTION: 1 | STATUS: CORRECT
---------------------------------------------------
-
-TEXT: Evan Almighty continues the mainstream Bruce Almighty franchise, this time with newsman turned freshman Congressman from Buffalo, Evan Baxter (Steve Carell), at it's center. A wholly innocuous (and not even really self-doubting) man, God (Morgan Freeman) decides to enforce some sort of quest upon Baxter, in order to illustrate the importance of... reciprocal kindness, so that Baxter can "change the world" (aka, pay it forward).<br /><br />Think of Evan Almighty as a wholesome derivative of 'Distinguished Gentlemen.' Baxter is not a con, but his colleague, Congressman Long (John Goodman) wants his unquestioned support on a bill that essentially, is harmful to the environment. And well-meaning Baxter, knowing the importance of networking and visibility, is willing to support him. <br /><br />In addition, with the new job comes more responsibility, and Baxter is in a sense, vilified, for not spending enough time with his family. <br /><br />So God, decides to give Evan Baxter some guidance by forcing him to become the modern day Noah. His orders: build an ark. Except, while it may be mildly humorous to see Baxter's transformation to the "weirdo with a beard-o," there doesn't seem to be much point to this whole thing which becomes abundantly clearer when the climax of the film fizzles. (SPOILERS: if none of the population is killed by the "flood", then what was the point of summoning the animals... or at least the ones that obviously weren't from suburban Virginia? or, more importantly, if all Baxter had to realize was that Long's projects faltered in their quality, then why did he have to build an ark?).<br /><br />So, although a comedy like this needn't be a hysterical laugh-riot, it was certainly one made far less enjoyable as it was crammed with far too many homilies (and not all from Morgan Freeman) and action that seemed intended for a film of more epic events.
-Top Contributing Concepts:
- - Well-paced narrative.: 0.1320
- - Cringeworthy scenes.: 0.0898
- - Heart-touching scenes.: 0.0697
- - Captivating storyline.: 0.0300
- - Unconvincing special effects.: 0.0278
-PREDICTION: 1 | STATUS: INCORRECT (Label: 0)
 --------------------------------------------------
 
 TEXT: I believe that this is one of Elizabeth Montgomery's best performances in a movie, and I have seen most of her movies.I saw this for the first time on television when I was around fourteen, and I was so scared.I watch this movie every now and then, and I still enjoy it very much.I know that these days that this movie would probably not scare people too much.That just goes to show that the public movie and television audience has seen too much graphic violence in the last thirty years or so.I love movies that do not show the graphic details, you let your imagination do the work for you. The cast in this movie was top notch. Jess Walton, who played the sister in the story was very good, even though her part was rather small. She also played in a terrific made for television thriller around the same time called You'll Never See Me Again with David Hartman.I got the biggest kick out of Eileen Heckart's performance as the housekeeper. Eileen was so good as a lady with a very bad disposition.George Maharis who played the husband was quite effective.This story obviously had a lot of so called mistakes in the plot, but I love the movie anyway. I highly recommend this movie to people who love a good thriller without graphic violence.I gave this movie a vote of seven.
